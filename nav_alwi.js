@@ -47,19 +47,19 @@
     }
   }
 
-  // ── CONFIG SELURUH APLIKASI HTML (Root & Public) ──
-  
-
+  // ── CONFIG SELURUH APLIKASI HTML (Root Directory) ──
   const PAGE_INFO = {
-    'index.html':       { icon: '🕌', label: 'Nur Master',       desc: 'Pusat Nur System & Lab' },
+    'index.html':       { icon: '🏠', label: 'Beranda',          desc: 'Halaman Utama Hub' },
+    'peta-cod.html':    { icon: '📍', label: 'Peta 3 Titik',    desc: 'Peta COD 3 Titik Bebas' },
     'ALWI.html':        { icon: '⚡', label: 'ALWI System',      desc: 'Modul Server & Lab Alwi' },
     'peta.html':        { icon: '🗺️', label: 'Peta Interaktif',  desc: 'Pusat Indramayu Base' },
-    'peta-cod.html':    { icon: '📍', label: 'Peta 3 Titik',    desc: 'Peta COD 3 Titik Bebas' },
     'peta-cod22.html':  { icon: '🟡', label: 'Pos Tengah Awi',  desc: 'Navigasi Member ke Pos Awi' },
     'builder.html':     { icon: '🛠️', label: 'App Builder',     desc: 'Modul Pembangun Sistem' },
     'gambarBUILD.html': { icon: '🖼️', label: 'Gambar Builder',  desc: 'Pembangun Aset Visual' },
     'nurBARU2.html':    { icon: '🌟', label: 'Nur Baru V2',      desc: 'Sistem Generator Nur' }
   };
+
+  const currentPage = location.pathname.split('/').pop() || 'index.html';
 
   // ── INJECT CSS ALWI ──
   const style = document.createElement('style');
@@ -156,5 +156,4 @@
   window.playClickSound = playClickSound;
   window.speakAlwi = speakText;
 })();
-
 
