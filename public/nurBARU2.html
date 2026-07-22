@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nur Creative Lab — AI HTML Builder & Keep</title>
+<style>
+  :root{
+    --bg:#1e1e1e;
+    --panel:#252526;
+    --panel2:#181818;
+    --border:#333;
+    --gold:#facc15;
+    --text:#d4d4d4;
+    --muted:#8a8a8a;
+    --code:#569cd6;
+  }
+  *{box-sizing:border-box;}
+  html,body{ height:100%; margin:0; }
+  body{
+    background:var(--panel2);
+    color:var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display:flex; flex-direction:column;
+  }
+  header{
+    padding:10px 14px; border-bottom:2px solid var(--gold);
+    background:var(--panel); display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;
+  }
+  header .title{ font-weight:bold; font-size:14px; color:var(--gold); }
+  header .subtitle{ font-size:10px; color:var(--muted); }
+  header .header-btns{ display:flex; gap:6px; }
+  header .header-btns button{
+    background:var(--gold); border:none; border-radius:6px; padding:5px 10px; font-size:11px; font-weight:bold; cursor:pointer;
+  }
+  header .header-btns button.memory-btn{ background:#3b82f6; color:#fff; }
+
+  .apikey-bar{
+    background:var(--panel); border-bottom:1px solid var(--border); padding:8px 12px;
+    display:flex; gap:8px; align-items:center; font-size:11px; flex-wrap:wrap;
+  }
+  .apikey-bar span.label{ color:var(--muted); }
+  .apikey-bar select{
+    background:#333; color:var(--text); border:1px solid var(--border); border-radius:6px;
+    padding:5px 8px; font-size:11px;
+  }
+  .apikey-bar input[type=text]{
+    flex:1; min-width:120px; background:#333; color:var(--text); border:1px solid var(--border);
+    border-radius:6px; padding:5px 8px; font-size:11px;
+  }
+  .apikey-bar button{
+    background:#444; color:var(--text); border:1px solid var(--border); border-radius:6px;
+    padding:5px 10px; font-size:11px; cursor:pointer;
+  }
+  .apikey-bar .saved-tag{ color:#7fbf7f; }
+
+  /* Style Tambahan Fitur Video Dropdown */
+  .video-bar-item{ display:flex; align-items:center; gap:6px; }
+  .video-bar-item select{ background:#2d3748; color:var(--gold); border:1px solid var(--gold); border-radius:6px; padding:5px; font-size:11px; }
+
+  main{ flex:1; display:flex; flex-direction:column; min-height:0; }
+
+  .tabs{ display:flex; background:var(--panel2); border-bottom:1px solid var(--border); }
+  .tabs button{
+    flex:1; padding:9px; background:transparent; border:none; color:var(--muted);
+    font-size:11px; text-transform:uppercase; letter-spacing:.05em; font-weight:bold; cursor:pointer;
+    border-bottom:2px solid transparent;
+  }
+  .tabs button.active{ color:var(--gold); border-bottom-color:var(--gold); }
+
+  .panes{ flex:1; position:relative; min-height:0; }
+  .pane{ position:absolute; inset:0; display:none; flex-direction:column; }
+  .pane.active{ display:flex; }
+
+  #codeArea{
+    flex:1; background:var(--panel2); color:var(--code); font-family:"Courier New", monospace;
+    font-size:12px; padding:14px; border:none; outline:none; resize:none; line-height:1.6;
+  }
+  #previewFrame{ flex:1; width:100%; border:none; background:#fff; }
+
+  .chatlog{ flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px; }
+  .chatlog .msg{ display:flex; }
+  .chatlog .msg.user{ justify-content:flex-end; }
+  .chatlog .bubble{
+    max-width:85%; padding:8px 10px; border-radius:10px; font-size:12px; line-height:1.5; white-space:pre-wrap;
+  }
+  .chatlog .msg.user .bubble{ background:var(--gold); color:#1e1e1e; }
+  .chatlog .msg.assistant .bubble{ background:var(--panel); color:var(--text); border:1px solid var(--border); }
+  .chatlog .msg.assistant .bubble .fname{ color:var(--gold); font-size:10px; display:block; margin-bottom:4px; }
+
+  footer.toolbar{
+    border-top:2px solid var(--gold); background:var(--panel); padding:10px;
+    display:flex; gap:8px; align-items:center;
+  }
+  footer.toolbar input[type=text]{
+    flex:1; background:#333; color:#fff; border:1px solid var(--border); border-radius:8px;
+    padding:10px 12px; font-size:13px; outline:none;
+  }
+  footer.toolbar input[type=text]:focus{ border-color:var(--gold); }
+  footer.toolbar button{
+    background:var(--gold); color:#1e1e1e; border:none; border-radius:8px;
+    padding:10px 16px; font-weight:bold; font-size:13px; cursor:pointer; white-space:nowrap;
+  }
+  footer.toolbar button:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  .action-row{
+    display:flex; gap:8px; padding:8px 12px; background:var(--panel); border-top:1px solid var(--border);
+    font-size:11px; flex-wrap:wrap;
+  }
+  .action-row button{
+    background:#333; color:var(--text); border:1px solid var(--border); border-radius:6px;
+    padding:6px 10px; cursor:pointer; font-size:11px;
+  }
+  .action-row button.keep-btn{ background:#3b82f6; color:#fff; border-color:#2563eb; }
+
+  /* Modal */
+  .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:99; padding:20px; flex-direction:column; justify-content:center; }
+  .modal-content{ background:var(--panel); border:1px solid var(--gold); border-radius:8px; padding:15px; max-height:80vh; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+  .modal-header{ display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:8px; }
+  .modal-title{ font-weight:bold; color:var(--gold); font-size:14px; }
+  .keep-item{ background:var(--panel2); border:1px solid var(--border); padding:8px; border-radius:6px; font-size:12px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .memory-item{ background:var(--panel2); border:1px solid var(--border); padding:8px; border-radius:6px; font-size:11px; }
+  .memory-item .role-tag{ font-weight:bold; font-size:10px; }
+  .memory-item .role-tag.user{ color:var(--gold); }
+  .memory-item .role-tag.assistant{ color:#3b82f6; }
+  .memory-item .ts{ color:var(--muted); font-size:9px; float:right; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="title">⚡ Nur Creative Lab</div>
+    <div class="subtitle">AI HTML Builder & Keep System</div>
+  </div>
+  <div class="header-btns">
+    <button id="voiceToggleBtn">🔊 Suara</button>
+    <button id="openMemoryBtn" class="memory-btn">🧠 Memori</button>
+    <button id="openNotesBtn">📂 Daftar Catatan</button>
+  </div>
+</header>
+
+<div class="apikey-bar">
+  <span class="label">Mesin AI:</span>
+  <select id="engineSelect">
+    <option value="alwicache">🧕 Alwi Cache Bot (offline, tanpa internet)</option>
+    <option value="pollinations">Pollinations (gratis, tanpa key)</option>
+    <option value="gemini">Gemini (butuh API key)</option>
+  </select>
+  <input type="text" id="apiKeyInput" placeholder="Gemini API Key" style="display:none;">
+  <button id="saveKeyBtn" style="display:none;">Simpan</button>
+  <span class="saved-tag" id="keyStatus"></span>
+
+  <!-- DROPDOWN CERDAS VIDEO RENDER -->
+  <div class="video-bar-item">
+    <span class="label" style="color:var(--gold); font-weight:bold;">🎬 Video Render:</span>
+    <select id="videoDropdown">
+      <option value="">🔍 Memuat video...</option>
+    </select>
+    <button id="playVideoBtn" style="background:var(--gold); color:#000; font-weight:bold;">▶️ Putar</button>
+    <button id="insertVideoBtn" style="background:#10b981; color:#fff;">➕ Masukkan ke HTML</button>
+  </div>
+</div>
+
+<main>
+  <div class="tabs">
+    <button data-tab="chat" class="active">💬 Chat</button>
+    <button data-tab="code">📝 Kode</button>
+    <button data-tab="preview">👁 Preview</button>
+  </div>
+
+  <div class="panes">
+    <div class="pane active" data-pane="chat">
+      <div id="chatLog" class="chatlog"></div>
+    </div>
+    <div class="pane" data-pane="code">
+      <textarea id="codeArea" spellcheck="false"></textarea>
+    </div>
+    <div class="pane" data-pane="preview">
+      <iframe id="previewFrame" title="AI Preview" scrolling="yes" style="overflow:auto; -webkit-overflow-scrolling:touch;"></iframe>
+    </div>
+  </div>
+
+  <div class="action-row">
+    <button id="copyBtn">📋 Copy HTML</button>
+    <button id="downloadBtn">⬇️ Download .html</button>
+    <button id="saveKeepBtn" class="keep-btn">📌 Simpan ke Keep</button>
+    <button id="resetBtn">🔄 Reset Project</button>
+  </div>
+
+  <footer class="toolbar">
+    <input type="text" id="promptInput" placeholder="Ketik instruksi untuk Nur...">
+    <button id="sendBtn">✨ Bikin</button>
+  </footer>
+</main>
+
+<!-- Modal Catatan / Keep -->
+<div id="notesModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">📌 Catatan & Draf Tersimpan</div>
+      <button id="closeNotesBtn" style="background:#444; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;">X</button>
+    </div>
+    <div id="notesList" style="display:flex; flex-direction:column; gap:8px;"></div>
+  </div>
+</div>
+
+<!-- Modal Memori HP -->
+<div id="memoryModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">🧠 Memori Nur di HP</div>
+      <button id="closeMemoryBtn" style="background:#444; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;">X</button>
+    </div>
+    <div id="memoryList" style="display:flex; flex-direction:column; gap:6px;"></div>
+    <button id="clearMemoryBtn" style="background:#882222; color:#fff; border:none; border-radius:6px; padding:8px; cursor:pointer; font-size:12px;">🗑️ Hapus Semua Memori</button>
+  </div>
+</div>
+
+<!-- Modal Pemutar Video Render -->
+<div id="videoModal" class="modal">
+  <div class="modal-content" style="align-items:center;">
+    <div class="modal-header" style="width:100%;">
+      <div class="modal-title" id="videoModalTitle">▶️ Pemutar Video Render Alwi</div>
+      <button id="closeVideoBtn" style="background:#444; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;">X</button>
+    </div>
+    <video id="videoPlayer" controls style="max-width:100%; max-height:60vh; border-radius:8px; border:1px solid var(--gold); margin-top:10px;"></video>
+  </div>
+</div>
+
+<script>
+(function(){
+  const STARTER_CODE = "<h1 style=\"font-family:sans-serif;text-align:center;margin-top:40px;\">Selamat Datang di Nur Creative Lab!</h1>\n<p style=\"font-family:sans-serif;text-align:center;color:#555;\">Ketik perintah di bawah, lalu tekan <b>✨ Bikin</b>.</p>";
+
+  let currentCode = STARTER_CODE;
+  let chatHistory = [];
+
+  // Storage Keys
+  const KEY_STORAGE = 'indramayu_gemini_api_key';
+  const KEEP_STORAGE = 'indramayu_nur_keep_notes';
+  const NUR_MEMORY_KEY = 'nur_hp_memory_store';
+
+  // ==========================================
+  // FITUR CERDAS DROPDOWN VIDEO RENDER
+  // ==========================================
+  const videoDropdown = document.getElementById('videoDropdown');
+  const playVideoBtn = document.getElementById('playVideoBtn');
+  const insertVideoBtn = document.getElementById('insertVideoBtn');
+  const videoModal = document.getElementById('videoModal');
+  const videoPlayer = document.getElementById('videoPlayer');
+  const videoModalTitle = document.getElementById('videoModalTitle');
+  const closeVideoBtn = document.getElementById('closeVideoBtn');
+
+  async function loadRenderedVideos(){
+    try {
+      const res = await fetch('/api/files'); // atau /api/renders
+      if (!res.ok) throw new Error('Buka via server Termux');
+      const files = await res.json();
+      
+      const mp4Files = files.filter(f => f.endsWith('.mp4') || f.includes('-rendered'));
+      videoDropdown.innerHTML = '';
+
+      if (mp4Files.length === 0) {
+        videoDropdown.innerHTML = '<option value="">(Belum ada video render)</option>';
+        return;
+      }
+
+      mp4Files.forEach((file, index) => {
+        const opt = document.createElement('option');
+        opt.value = `/render/${file}`; // Path endpoint file render
+        opt.textContent = `🎬 Video ${index + 1}: ${file}`;
+        videoDropdown.appendChild(opt);
+      });
+    } catch(e) {
+      videoDropdown.innerHTML = '<option value="">(Buka via http://localhost:3000)</option>';
+    }
+  }
+
+  // Load daftar video saat pertama dibuka
+  loadRenderedVideos();
+
+  playVideoBtn.addEventListener('click', () => {
+    const videoUrl = videoDropdown.value;
+    if (!videoUrl) return alert('Pilih video terlebih dahulu!');
+    videoPlayer.src = videoUrl;
+    videoModalTitle.textContent = "▶️ Memutar: " + videoDropdown.options[videoDropdown.selectedIndex].text;
+    videoModal.style.display = 'flex';
+    videoPlayer.play();
+  });
+
+  closeVideoBtn.addEventListener('click', () => {
+    videoPlayer.pause();
+    videoModal.style.display = 'none';
+  });
+
+  insertVideoBtn.addEventListener('click', () => {
+    const videoUrl = videoDropdown.value;
+    if (!videoUrl) return alert('Pilih video terlebih dahulu!');
+    const videoTag = `\n<div style="text-align:center; margin:20px 0;">\n  <video controls autoplay loop style="max-width:100%; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.3);">\n    <source src="${videoUrl}" type="video/mp4">\n  </video>\n</div>\n`;
+    currentCode += videoTag;
+    codeArea.value = currentCode;
+    updatePreview();
+    alert('✅ Tag Video berhasil dimasukkan ke dalam HTML!');
+  });
+
+  // DATA AKUN NUR
+  const NUR_ACCOUNTS_KEY = "nur_accounts";
+  const DEFAULT_NUR_ACCOUNTS = {
+    "Nur 1 (rumah nur)": "Indramayuclubmakrifat@gmail.com",
+    "Nur 2 (pusat nur diskusi)": "dkohar011@gmail.com",
+    "Nur 3 (nur asisten keuangan)": "imahazzah51@gmail.com",
+    "Nur 4 (nur kreator)": "kurnadibewok3311@gmail.com",
+    "Nur 5 (nur pembimbing)": "motherai@gmail.com",
+    "Nur 6 (nur administrasi kas)": "Memotong 5% setiap permainan",
+    "Nur 7 (nur komunikasi makrifat)": "aimininurindramayu@gmail.com",
+    "Nur 8 (nur backup)": "Nurindrmayumini@gmail.com",
+    "Nur 9 (nur pembimbing kas)": "motherai@gmail.com (Melahirkan AI Nur mini)"
+  };
+  const NUR_OWNER = "Pak Jamhari Dulkohar";
+
+  if (!localStorage.getItem(NUR_ACCOUNTS_KEY)) {
+    localStorage.setItem(NUR_ACCOUNTS_KEY, JSON.stringify(DEFAULT_NUR_ACCOUNTS));
+  }
+
+  function getAccountsFromStorage(){
+    try {
+      const data = localStorage.getItem(NUR_ACCOUNTS_KEY);
+      return data ? JSON.parse(data) : DEFAULT_NUR_ACCOUNTS;
+    } catch (e) {
+      return DEFAULT_NUR_ACCOUNTS;
+    }
+  }
+
+  function buildAccountContext(userMessage){
+    const lower = userMessage.toLowerCase();
+    if (!lower.includes('akun') && !lower.includes('localstorage') && !lower.includes('nur ')) return '';
+    const accounts = getAccountsFromStorage();
+    return "\n\n[Data akun ekosistem Nur tersimpan di HP]:\n" + JSON.stringify(accounts, null, 2) +
+      "\nPemilik utama: " + NUR_OWNER + ".";
+  }
+
+  async function buildFileSystemContext(userMessage){
+    const lower = userMessage.toLowerCase();
+    const nyangkutFile = ['video', 'render', 'foto', 'file', 'upload', 'storage', 'termux', 'simpan'].some(k => lower.includes(k));
+    if (!nyangkutFile) return '';
+
+    try {
+      const [renderRes, fileRes] = await Promise.all([
+        fetch('/api/renders').then(r => r.ok ? r.json() : []).catch(() => null),
+        fetch('/api/files').then(r => r.ok ? r.json() : []).catch(() => null),
+      ]);
+
+      return "\n\n[Data nyata dari server lokal Termux]:\n" +
+        "- Foto ter-upload (folder uploads/): " + (fileRes && fileRes.length ? fileRes.join(', ') : '(kosong)') + "\n" +
+        "- Video hasil render (folder render/): " + (renderRes && renderRes.length ? renderRes.join(', ') : '(kosong)');
+    } catch (e) {
+      return "\n\n[Info sistem]: Gagal mengecek server lokal (" + e.message + ").";
+    }
+  }
+
+  function getNurMemory(){
+    try { return JSON.parse(localStorage.getItem(NUR_MEMORY_KEY) || '[]'); }
+    catch (e) { return []; }
+  }
+
+  function saveNurMemory(role, text){
+    try {
+      const memory = getNurMemory();
+      memory.push({ role, text, timestamp: new Date().toISOString() });
+      while (memory.length > 20) memory.shift();
+      localStorage.setItem(NUR_MEMORY_KEY, JSON.stringify(memory));
+    } catch (e) {
+      console.error('Gagal menyimpan memori ke HP:', e);
+    }
+  }
+
+  function clearNurMemory(){ localStorage.removeItem(NUR_MEMORY_KEY); }
+
+  function buildMemoryContext(){
+    const memory = getNurMemory();
+    if (!memory.length) return '';
+    return "\n\nCatatan memori tersimpan di HP pengguna:\n" +
+      memory.map(m => `- [${m.role}]: ${m.text}`).join('\n');
+  }
+
+  const engineSelect = document.getElementById('engineSelect');
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  const saveKeyBtn = document.getElementById('saveKeyBtn');
+  const keyStatus = document.getElementById('keyStatus');
+
+  function getApiKey(){ return localStorage.getItem(KEY_STORAGE) || ''; }
+  function refreshKeyStatus(){
+    const k = getApiKey();
+    keyStatus.textContent = (engineSelect.value === 'gemini' && k) ? '✓ Key tersimpan' : '';
+  }
+  engineSelect.addEventListener('change', () => {
+    const isGemini = engineSelect.value === 'gemini';
+    apiKeyInput.style.display = isGemini ? 'inline-block' : 'none';
+    saveKeyBtn.style.display = isGemini ? 'inline-block' : 'none';
+    refreshKeyStatus();
+  });
+  saveKeyBtn.addEventListener('click', () => {
+    const v = apiKeyInput.value.trim();
+    if (v){ localStorage.setItem(KEY_STORAGE, v); apiKeyInput.value=''; refreshKeyStatus(); }
+  });
+  refreshKeyStatus();
+
+  // Tabs
+  const tabButtons = document.querySelectorAll('.tabs button');
+  const panes = document.querySelectorAll('.pane');
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach(b => b.classList.remove('active'));
+      panes.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelector('.pane[data-pane="' + btn.dataset.tab + '"]').classList.add('active');
+      if (btn.dataset.tab === 'code') codeArea.value = currentCode;
+      if (btn.dataset.tab === 'preview') updatePreview();
+    });
+  });
+
+  const chatLogEl = document.getElementById('chatLog');
+  const codeArea = document.getElementById('codeArea');
+  const previewFrame = document.getElementById('previewFrame');
+  const promptInput = document.getElementById('promptInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const saveKeepBtn = document.getElementById('saveKeepBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const notesModal = document.getElementById('notesModal');
+  const openNotesBtn = document.getElementById('openNotesBtn');
+  const closeNotesBtn = document.getElementById('closeNotesBtn');
+  const notesList = document.getElementById('notesList');
+  const memoryModal = document.getElementById('memoryModal');
+  const openMemoryBtn = document.getElementById('openMemoryBtn');
+  const closeMemoryBtn = document.getElementById('closeMemoryBtn');
+  const memoryList = document.getElementById('memoryList');
+  const clearMemoryBtn = document.getElementById('clearMemoryBtn');
+  const voiceToggleBtn = document.getElementById('voiceToggleBtn');
+
+  // Suara Web Speech API
+  const VOICE_PREF_KEY = 'nur_voice_enabled';
+  let voiceEnabled = localStorage.getItem(VOICE_PREF_KEY) !== 'off';
+  let idVoice = null;
+
+  function pickIndonesianVoice(){
+    if (!('speechSynthesis' in window)) return;
+    const voices = window.speechSynthesis.getVoices();
+    idVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('id')) || null;
+  }
+  if ('speechSynthesis' in window){
+    pickIndonesianVoice();
+    window.speechSynthesis.onvoiceschanged = pickIndonesianVoice;
+  }
+
+  function updateVoiceBtn(){ voiceToggleBtn.textContent = voiceEnabled ? '🔊 Suara' : '🔇 Suara'; }
+  updateVoiceBtn();
+
+  voiceToggleBtn.addEventListener('click', () => {
+    voiceEnabled = !voiceEnabled;
+    localStorage.setItem(VOICE_PREF_KEY, voiceEnabled ? 'on' : 'off');
+    updateVoiceBtn();
+    if (!voiceEnabled && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  });
+
+  function speakNur(text){
+    if (!voiceEnabled || !text) return;
+    if (!('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'id-ID';
+      if (idVoice) utter.voice = idVoice;
+      utter.rate = 1;
+      utter.pitch = 1;
+      window.speechSynthesis.speak(utter);
+    } catch (e) {
+      console.error('Gagal memutar suara Nur:', e);
+    }
+  }
+
+  codeArea.value = currentCode;
+  codeArea.addEventListener('input', () => { currentCode = codeArea.value; });
+
+  const SCROLL_FIX_STYLE = '<style>html,body{margin:0;height:auto !important;min-height:100%;overflow-y:auto !important;-webkit-overflow-scrolling:touch;}</style>';
+  function wrapForScroll(html){
+    if (/<head[\s>]/i.test(html)) return html.replace(/<head[^>]*>/i, match => match + SCROLL_FIX_STYLE);
+    if (/<html[^>]*>/i.test(html)) return html.replace(/<html[^>]*>/i, match => match + '<head>' + SCROLL_FIX_STYLE + '</head>');
+    return SCROLL_FIX_STYLE + html;
+  }
+
+  function updatePreview(){ previewFrame.srcdoc = wrapForScroll(currentCode); }
+  updatePreview();
+
+  function renderChat(){
+    chatLogEl.innerHTML = '';
+    if (!chatHistory.length){
+      const hint = document.createElement('div');
+      hint.style.cssText = 'color:#8a8a8a;font-size:12px;text-align:center;margin-top:20px;';
+      hint.textContent = 'Belum ada percakapan. Ketik perintah di bawah untuk mulai membangun.';
+      chatLogEl.appendChild(hint);
+      return;
+    }
+    chatHistory.forEach(m => {
+      const row = document.createElement('div');
+      row.className = 'msg ' + m.role;
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      if (m.role === 'assistant'){
+        const fname = document.createElement('span');
+        fname.className = 'fname';
+        fname.textContent = '⚡ Nur';
+        bubble.appendChild(fname);
+      }
+      const textNode = document.createElement('span');
+      textNode.textContent = m.text;
+      bubble.appendChild(textNode);
+      row.appendChild(bubble);
+      chatLogEl.appendChild(row);
+    });
+    chatLogEl.scrollTop = chatLogEl.scrollHeight;
+  }
+  renderChat();
+
+  function cleanCode(raw){
+    return raw.replace(/```html/gi, '').replace(/```css/gi, '').replace(/```javascript/gi,'').replace(/```/g, '').trim();
+  }
+
+  const ALWI_HTML_TEMPLATES = {
+    landing: (judul) => `<!DOCTYPE html>
+<html lang="id"><head><meta charset="UTF-8"><title>${judul}</title>
+<style>body{font-family:sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:40px 20px;text-align:center;}
+h1{color:#facc15;font-size:2em;} p{color:#94a3b8;max-width:480px;margin:12px auto;}
+button{background:#facc15;color:#0f172a;border:none;padding:12px 24px;border-radius:8px;font-weight:bold;margin-top:16px;cursor:pointer;}</style>
+</head><body><h1>${judul}</h1><p>Halaman ini dibuat offline oleh Alwi Cache Bot.</p>
+<button onclick="alert('Halo dari Alwi!')">Coba Klik</button></body></html>`,
+    kartu: (judul) => `<!DOCTYPE html>
+<html lang="id"><head><meta charset="UTF-8"><title>${judul}</title>
+<style>body{font-family:sans-serif;background:#f1f5f9;margin:0;padding:20px;display:flex;justify-content:center;}
+.card{background:#fff;border-radius:14px;box-shadow:0 4px 12px rgba(0,0,0,0.1);padding:24px;max-width:360px;text-align:center;}
+h2{color:#1e293b;} p{color:#64748b;}</style>
+</head><body><div class="card"><h2>${judul}</h2><p>Kartu sederhana ini dibuat offline oleh Alwi Cache Bot.</p></div></body></html>`
+  };
+
+  function ambilJudulDariPrompt(userMessage){
+    const cleaned = userMessage.replace(/buatkan|buat|bikin|halaman|html|tolong|dong/gi, '').trim();
+    return cleaned ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1) : 'Halaman Baru';
+  }
+
+  async function generateWithAlwiCache(userPrompt, taskInstruction){
+    saveNurMemory('user', userPrompt);
+    const lower = userPrompt.toLowerCase();
+    let reply;
+
+    if (/(^|\s)(halo|hai|hy|hallo|hei|assalamualaikum|sampurasun)(\s|$|!|\?)/i.test(lower)) {
+      reply = `Sampurasun, ${NUR_OWNER}! 😊 Alwi lagi mode cache offline nih. Ada yang mau dibangun atau ditanyakan?`;
+    } else if (/(buat|bikin|buatkan).*(html|halaman|web|landing|kartu)/i.test(lower) || /^(buat|bikin|buatkan)/i.test(lower)) {
+      const judul = ambilJudulDariPrompt(userPrompt);
+      const template = /kartu|card/i.test(lower) ? 'kartu' : 'landing';
+      reply = ALWI_HTML_TEMPLATES[template](judul);
+    } else if (lower.includes('video') || lower.includes('render') || lower.includes('storage') || lower.includes('foto') || lower.includes('file')) {
+      const fsContext = await buildFileSystemContext(userPrompt);
+      reply = fsContext
+        ? "Alwi cek data lokal dulu ya (mode cache):" + fsContext.replace('[Data nyata dari server lokal Termux]:', '')
+        : "Alwi belum bisa cek file/video karena lagi mode cache offline.";
+    } else if (lower.includes('akun') || lower.includes('nur')) {
+      reply = buildAccountContext(userPrompt) || "Belum ada data akun yang cocok.";
+    } else {
+      const memoryContext = buildMemoryContext();
+      reply = `Alwi catat pertanyaanmu: "${userPrompt}". Untuk jawaban lebih pintar, bisa pindah ke mesin Gemini di atas.${memoryContext ? ' (Riwayat kamu tetap Alwi ingat kok.)' : ''}`;
+    }
+
+    if (reply) saveNurMemory('assistant', reply);
+    return reply;
+  }
+
+  async function generateWithPollinations(userPrompt, taskInstruction){
+    const memoryContext = buildMemoryContext();
+    const accountContext = buildAccountContext(userPrompt);
+    const fsContext = await buildFileSystemContext(userPrompt);
+    const fullPrompt = taskInstruction + memoryContext + accountContext + fsContext + "\n\nPermintaan: " + userPrompt;
+    saveNurMemory('user', userPrompt);
+
+    const url = 'https://text.pollinations.ai/' + encodeURIComponent(fullPrompt);
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Gagal menghubungi Pollinations AI.');
+    const replyText = await res.text();
+    if (replyText) saveNurMemory('assistant', replyText);
+    return replyText;
+  }
+
+  async function generateWithGemini(userPrompt, taskInstruction){
+    const key = getApiKey();
+    if (!key) throw new Error('Gemini API Key belum diisi atau tidak valid.');
+
+    const MODEL = 'gemini-2.5-flash';
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + MODEL + ':generateContent?key=' + encodeURIComponent(key);
+
+    const memoryContext = buildMemoryContext();
+    const accountContext = buildAccountContext(userPrompt);
+    const fsContext = await buildFileSystemContext(userPrompt);
+    const systemInstruction =
+      "Kamu adalah Nur, asisten AI teknis untuk Nur Creative Lab (ekosistem Indramayu Club). " +
+      "Selalu menyapa Pak Dulkohar dengan hangat dan hormat. " +
+      "Gunakan data nyata dari server lokal Termux untuk menunjukkan daftar foto dan video render.\n\n" +
+      taskInstruction + memoryContext + accountContext + fsContext;
+
+    saveNurMemory('user', userPrompt);
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemInstruction }] },
+        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error?.message || 'Gagal menghubungi Gemini API.');
+
+    const replyText = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+    if (replyText) saveNurMemory('assistant', replyText);
+    return replyText;
+  }
+
+  async function handleSend(){
+    const userPrompt = promptInput.value.trim();
+    if (!userPrompt) return;
+    promptInput.value = '';
+    chatHistory.push({ role: 'user', text: userPrompt });
+    renderChat();
+
+    sendBtn.disabled = true;
+    sendBtn.textContent = '⏳ ...';
+
+    const isFirstBuild = currentCode.trim() === STARTER_CODE.trim() || currentCode.trim() === '';
+    const taskInstruction = isFirstBuild
+      ? "Tugas Anda: jika permintaan user adalah untuk MEMBUAT halaman/komponen HTML, buatkan HTML murni lengkap dengan tag <style> CSS di dalamnya — jangan beri teks penjelasan apapun, langsung kodenya saja. Jika hanya pertanyaan/obrolan biasa, jawab singkat dengan teks biasa."
+      : "Ini kode HTML yang sudah ada:\n\n" + currentCode + "\n\nJika permintaan berikut adalah revisi/edit, kembalikan HTML LENGKAP hasil revisinya. Jika hanya pertanyaan/obrolan biasa, jawab singkat dengan teks biasa.";
+
+    try {
+      let raw;
+      if (engineSelect.value === 'gemini') {
+        raw = await generateWithGemini(userPrompt, taskInstruction);
+      } else if (engineSelect.value === 'alwicache') {
+        raw = await generateWithAlwiCache(userPrompt, taskInstruction);
+      } else {
+        raw = await generateWithPollinations(userPrompt, taskInstruction);
+      }
+      const clean = cleanCode(raw);
+      if (!clean) throw new Error('AI tidak mengembalikan jawaban.');
+
+      const looksLikeHtml = /^\s*(<!doctype|<html|<head|<body|<div|<section|<main|<style|<h[1-6]|<p[\s>]|<!--)/i.test(clean);
+
+      if (looksLikeHtml){
+        currentCode = clean;
+        codeArea.value = currentCode;
+        previewFrame.srcdoc = '';
+        setTimeout(() => { previewFrame.srcdoc = wrapForScroll(currentCode); }, 0);
+        const infoMsg = '✅ Kode berhasil dibuat/diperbarui.';
+        chatHistory.push({ role: 'assistant', text: infoMsg });
+        speakNur(infoMsg);
+      } else {
+        chatHistory.push({ role: 'assistant', text: clean });
+        speakNur(clean);
+      }
+    } catch (err){
+      const errMsg = '❌ Error: ' + err.message;
+      chatHistory.push({ role: 'assistant', text: errMsg });
+    } finally {
+      renderChat();
+      sendBtn.disabled = false;
+      sendBtn.textContent = '✨ Bikin';
+    }
+  }
+
+  sendBtn.addEventListener('click', handleSend);
+  promptInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
+
+  function getSavedNotes(){ return JSON.parse(localStorage.getItem(KEEP_STORAGE) || '[]'); }
+
+  function saveNoteToKeep(){
+    const title = prompt("Masukkan Judul Catatan/Keep:", "Draf HTML - " + new Date().toLocaleTimeString());
+    if (!title) return;
+
+    const notes = getSavedNotes();
+    notes.push({ id: Date.now(), title: title, date: new Date().toLocaleString('id-ID'), code: currentCode });
+    localStorage.setItem(KEEP_STORAGE, JSON.stringify(notes));
+    alert('📌 Catatan berhasil disimpan ke Keep!');
+  }
+
+  function renderNotesList(){
+    const notes = getSavedNotes();
+    notesList.innerHTML = '';
+    if (!notes.length){
+      notesList.innerHTML = '<div style="color:#8a8a8a; font-size:12px; text-align:center;">Belum ada catatan tersimpan.</div>';
+      return;
+    }
+    notes.forEach(item => {
+      const el = document.createElement('div');
+      el.className = 'keep-item';
+      el.innerHTML = `
+        <div>
+          <strong style="color:var(--gold);">${item.title}</strong>
+          <div style="font-size:10px; color:var(--muted);">${item.date}</div>
+        </div>
+        <div style="display:flex; gap:5px;">
+          <button onclick="loadNote(${item.id})" style="background:#444; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;">Buka</button>
+          <button onclick="deleteNote(${item.id})" style="background:#882222; color:#fff; border:none; border-radius:4px; padding:4px 8px; cursor:pointer;">Hapus</button>
+        </div>
+      `;
+      notesList.appendChild(el);
+    });
+  }
+
+  window.loadNote = function(id){
+    const notes = getSavedNotes();
+    const item = notes.find(n => n.id === id);
+    if (item){
+      currentCode = item.code;
+      codeArea.value = currentCode;
+      updatePreview();
+      notesModal.style.display = 'none';
+      alert(`Catatan "${item.title}" dimuat!`);
+    }
+  };
+
+  window.deleteNote = function(id){
+    let notes = getSavedNotes();
+    notes = notes.filter(n => n.id !== id);
+    localStorage.setItem(KEEP_STORAGE, JSON.stringify(notes));
+    renderNotesList();
+  };
+
+  saveKeepBtn.addEventListener('click', saveNoteToKeep);
+  openNotesBtn.addEventListener('click', () => { renderNotesList(); notesModal.style.display = 'flex'; });
+  closeNotesBtn.addEventListener('click', () => { notesModal.style.display = 'none'; });
+
+  function renderMemoryList(){
+    const memory = getNurMemory();
+    memoryList.innerHTML = '';
+    if (!memory.length){
+      memoryList.innerHTML = '<div style="color:#8a8a8a; font-size:12px; text-align:center;">Belum ada memori tersimpan.</div>';
+      return;
+    }
+    memory.slice().reverse().forEach(m => {
+      const el = document.createElement('div');
+      el.className = 'memory-item';
+      const waktu = new Date(m.timestamp).toLocaleString('id-ID');
+      el.innerHTML = `
+        <span class="role-tag ${m.role}">${m.role === 'user' ? '🙋 Anda' : '⚡ Nur'}</span>
+        <span class="ts">${waktu}</span>
+        <div style="margin-top:4px;">${m.text.length > 200 ? m.text.slice(0,200) + '...' : m.text}</div>
+      `;
+      memoryList.appendChild(el);
+    });
+  }
+
+  openMemoryBtn.addEventListener('click', () => { renderMemoryList(); memoryModal.style.display = 'flex'; });
+  closeMemoryBtn.addEventListener('click', () => { memoryModal.style.display = 'none'; });
+  clearMemoryBtn.addEventListener('click', () => {
+    if (!confirm('Hapus semua memori Nur yang tersimpan di HP ini?')) return;
+    clearNurMemory();
+    renderMemoryList();
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(currentCode);
+      copyBtn.textContent = '✅ Tersalin';
+      setTimeout(() => copyBtn.textContent = '📋 Copy HTML', 1500);
+    } catch(e){ alert('Gagal copy otomatis.'); }
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    const blob = new Blob([currentCode], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'hasil-nur-lab.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  resetBtn.addEventListener('click', () => {
+    if (!confirm('Reset project dan hapus riwayat chat?')) return;
+    currentCode = STARTER_CODE;
+    chatHistory = [];
+    codeArea.value = currentCode;
+    updatePreview();
+    renderChat();
+  });
+
+})();
+</script>
+</body>
+</html>
+

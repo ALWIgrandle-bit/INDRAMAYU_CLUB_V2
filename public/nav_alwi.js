@@ -32,7 +32,24 @@
     }
   }
 
+  // ── SUARA VOICE TTS (Web Speech API) ──
+  function speakText(text) {
+    try {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel(); // Stop suara sebelumnya kalau masih ngomong
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'id-ID';
+      utter.rate = 1;
+      utter.pitch = 1;
+      window.speechSynthesis.speak(utter);
+    } catch (e) {
+      // Browser tidak mendukung Speech Synthesis
+    }
+  }
+
   // ── CONFIG SELURUH APLIKASI HTML (Root & Public) ──
+  
+
   const PAGE_INFO = {
     'index.html':       { icon: '🕌', label: 'Nur Master',       desc: 'Pusat Nur System & Lab' },
     'ALWI.html':        { icon: '⚡', label: 'ALWI System',      desc: 'Modul Server & Lab Alwi' },
@@ -43,8 +60,6 @@
     'gambarBUILD.html': { icon: '🖼️', label: 'Gambar Builder',  desc: 'Pembangun Aset Visual' },
     'nurBARU2.html':    { icon: '🌟', label: 'Nur Baru V2',      desc: 'Sistem Generator Nur' }
   };
-
-  const currentPage = location.pathname.split('/').pop() || 'index.html';
 
   // ── INJECT CSS ALWI ──
   const style = document.createElement('style');
@@ -118,6 +133,9 @@
   toggle.addEventListener('click', () => {
     playClickSound();
     panel.classList.toggle('show');
+    if (panel.classList.contains('show')) {
+      speakText('Selamat datang di Pos Tengah Alwi');
+    }
   });
 
   // Render Seluruh Aplikasi
@@ -136,5 +154,7 @@
   }).join('');
 
   window.playClickSound = playClickSound;
+  window.speakAlwi = speakText;
 })();
+
 
