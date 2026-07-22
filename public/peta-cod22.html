@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Peta COD - Indramayu Club</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background-color: #121212; color: #e0e0e0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    .header { text-align: center; margin-bottom: 15px; }
+    .header h1 { color: #ffd700; font-size: 22px; margin-bottom: 5px; }
+    .header p { color: #a0a0a0; font-size: 13px; }
+
+    .panel {
+      width: 100%; max-width: 800px;
+      background: #1e1e1e; border: 1px solid #333; border-radius: 10px;
+      padding: 14px; margin-bottom: 15px;
+    }
+    .panel-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+    .btn {
+      flex: 1; min-width: 140px; padding: 12px 14px;
+      border: none; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer;
+    }
+    .btn-gps { background: #ffd700; color: #000; }
+    .btn-wa { background: #25D366; color: #000; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .info-box {
+      background: #161616; border: 1px dashed #444; border-radius: 8px;
+      padding: 10px; font-size: 13px; color: #ccc; line-height: 1.6;
+    }
+    .info-box b { color: #ffd700; }
+    .status { font-size: 12px; color: #a0a0a0; margin-top: 6px; }
+
+    #map { width: 100%; max-width: 800px; height: 420px; border-radius: 12px; border: 2px solid #333; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+    .leaflet-popup-content-wrapper { background: #1e1e1e; color: #fff; border-radius: 8px; border: 1px solid #ffd700; }
+    .leaflet-popup-tip { background: #1e1e1e; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🗺️ Peta COD - Awi Pos Tengah</h1>
+    <p>Member pilih titik sendiri via lokasi HP, rute jalan kaki dikirim lewat WhatsApp</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-row">
+      <button class="btn btn-gps" id="btnGps" onclick="pakaiLokasiSaya()">📍 Pakai Lokasi Saya (Titik COD)</button>
+      <button class="btn btn-wa" id="btnWa" onclick="bukaRuteWA()" disabled>🟢 Kirim Rute ke WhatsApp</button>
+    </div>
+    <div class="info-box">
+      <div><b>Pos Tengah (Awi):</b> <span id="posTengahText">memuat...</span></div>
+      <div><b>Titik Member:</b> <span id="posMemberText">belum diisi</span></div>
+      <div><b>Jarak lurus:</b> <span id="jarakText">-</span></div>
+    </div>
+    <div class="status" id="statusText"></div>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // ==== SET KOORDINAT POS TENGAH (AWI) DI SINI ====
+    const posTengah = { lat: -6.3262, lng: 108.3200, nama: "Awi - Pos Tengah" };
+
+    const map = L.map('map').setView([posTengah.lat, posTengah.lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    const iconAwi = L.divIcon({ className: '', html: '🟡', iconSize: [24,24] });
+    const iconMember = L.divIcon({ className: '', html: '📍', iconSize: [24,24] });
+
+    const markerAwi = L.marker([posTengah.lat, posTengah.lng], { icon: iconAwi })
+      .addTo(map)
+      .bindPopup(`<b>${posTengah.nama}</b><br><span style="font-size:11px">Titik kumpul tetap</span>`);
+
+    document.getElementById('posTengahText').textContent =
+      `${posTengah.lat.toFixed(5)}, ${posTengah.lng.toFixed(5)}`;
+
+    let markerMember = null;
+    let posMember = null;
+    let garis = null;
+
+    function hitungJarakKm(lat1, lng1, lat2, lng2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 +
+                Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
+                Math.sin(dLng/2)**2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    function pakaiLokasiSaya() {
+      const status = document.getElementById('statusText');
+      if (!navigator.geolocation) {
+        status.textContent = "❌ HP/browser tidak mendukung GPS.";
+        return;
+      }
+      status.textContent = "⏳ Mengambil lokasi kamu...";
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          posMember = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+
+          if (markerMember) map.removeLayer(markerMember);
+          markerMember = L.marker([posMember.lat, posMember.lng], { icon: iconMember })
+            .addTo(map)
+            .bindPopup("<b>Titik Kamu (COD)</b>")
+            .openPopup();
+
+          if (garis) map.removeLayer(garis);
+          garis = L.polyline(
+            [[posTengah.lat, posTengah.lng], [posMember.lat, posMember.lng]],
+            { color: '#ffd700', weight: 3, dashArray: '6,6' }
+          ).addTo(map);
+
+          const bounds = L.latLngBounds([
+            [posTengah.lat, posTengah.lng],
+            [posMember.lat, posMember.lng]
+          ]);
+          map.fitBounds(bounds, { padding: [40, 40] });
+
+          document.getElementById('posMemberText').textContent =
+            `${posMember.lat.toFixed(5)}, ${posMember.lng.toFixed(5)}`;
+
+          const jarak = hitungJarakKm(posTengah.lat, posTengah.lng, posMember.lat, posMember.lng);
+          document.getElementById('jarakText').textContent = jarak.toFixed(2) + " km (garis lurus)";
+
+          document.getElementById('btnWa').disabled = false;
+          status.textContent = "✅ Lokasi berhasil diambil.";
+        },
+        (err) => {
+          status.textContent = "❌ Gagal ambil lokasi: " + err.message + " (pastikan izin lokasi diaktifkan)";
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+
+    function bukaRuteWA() {
+      if (!posMember) return;
+      // Rute jalan kaki dari Titik Member menuju Pos Tengah (Awi)
+      const rute = `https://www.google.com/maps/dir/?api=1&origin=${posMember.lat},${posMember.lng}&destination=${posTengah.lat},${posTengah.lng}&travelmode=walking`;
+      const pesan = `Halo, ini rute jalan kaki menuju titik COD (${posTengah.nama}):\n${rute}\n\nSilakan ikuti arah di Google Maps ya, seperti Waze 🚶`;
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(pesan)}`;
+      window.open(waUrl, '_blank');
+    }
+  </script>
+<script src="nav_alwi.js"></script>
+
+
+</body>
+</html>

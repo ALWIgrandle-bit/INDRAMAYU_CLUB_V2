@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Foto Bergerak AI Indramayu Club</title>
+<style>
+  :root{
+    --bg:#040A06;
+    --panel:#0a1a0e;
+    --panel2:#0f2214;
+    --gold:#C9A84C;
+    --gold-bright:#FFD700;
+    --text:#EDE0C4;
+    --muted:#5a7060;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap{ max-width:480px; margin:0 auto; padding:24px 20px 60px; }
+  header{ text-align:center; margin-bottom:28px; border-bottom:2px solid var(--gold); padding-bottom:14px; }
+  h1{ color:var(--gold-bright); font-size:22px; margin:0 0 4px; }
+  header p{ color:var(--muted); font-size:11px; margin:0; }
+  .dropzone{
+    border:2px dashed rgba(201,168,76,0.4);
+    border-radius:16px;
+    padding:40px 16px;
+    text-align:center;
+    cursor:pointer;
+    background:var(--panel);
+  }
+  .dropzone:hover{ background:rgba(10,26,14,0.5); }
+  .dropzone .icon{ font-size:36px; margin-bottom:10px; }
+  .dropzone small{ color:var(--muted); font-size:11px; display:block; margin-top:6px; }
+  input[type=file]{ display:none; }
+  .preview-wrap{ margin-bottom:24px; }
+  canvas{ width:100%; height:auto; border-radius:16px; border:1px solid rgba(201,168,76,0.2); display:block; background:#000; }
+  .nav-row{ display:flex; justify-content:space-between; align-items:center; margin-top:14px; }
+  .nav-row button{
+    padding:10px 14px; border-radius:999px; border:none;
+    background:rgba(201,168,76,0.1); color:var(--text); font-size:16px; cursor:pointer;
+  }
+  .nav-row span{ font-weight:bold; color:var(--gold); font-size:14px; }
+  .btn-primary{
+    width:100%; padding:12px; border-radius:10px; border:none; margin-bottom:22px;
+    font-weight:bold; display:flex; align-items:center; justify-content:center; gap:8px;
+    background:linear-gradient(90deg,var(--gold),var(--gold-bright)); color:var(--bg); cursor:pointer; font-size:14px;
+  }
+  .btn-primary.playing{ background:#e11d48; color:#fff; }
+  .btn-primary:disabled{ opacity:0.5; cursor:not-allowed; }
+  section.card{ background:var(--panel); border:1px solid rgba(201,168,76,0.2); border-radius:16px; padding:16px; margin-bottom:22px; }
+  .card h2{ color:var(--gold-bright); font-size:15px; margin:0; display:flex; align-items:center; gap:8px; }
+  .card-head{ margin-bottom:14px; }
+  label.field-label{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; display:block; margin-bottom:8px; }
+  .effect-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .effect-grid button{
+    padding:9px; border-radius:10px; font-size:12px; font-weight:bold; cursor:pointer;
+    background:var(--panel); border:1px solid rgba(201,168,76,0.2); color:var(--text);
+  }
+  .effect-grid button.active{ background:rgba(201,168,76,0.2); border-color:var(--gold); }
+  input[type=range]{ width:100%; accent-color:var(--gold); }
+  input[type=text], textarea{
+    width:100%; background:var(--panel2); border:1px solid rgba(201,168,76,0.2);
+    border-radius:10px; padding:11px; color:var(--gold-bright); margin-bottom:12px; font-size:13px;
+  }
+  .btn-gold{
+    width:100%; padding:12px; border-radius:10px; border:none; cursor:pointer;
+    background:linear-gradient(90deg,var(--gold),var(--gold-bright)); color:var(--bg); font-weight:bold; font-size:14px;
+  }
+  .btn-gold:disabled{ opacity:0.5; cursor:not-allowed; }
+  .ai-result{
+    margin-top:14px; padding:12px; background:var(--panel2); border:1px solid rgba(201,168,76,0.2);
+    border-radius:10px; font-size:13px; white-space:pre-line; line-height:1.5;
+  }
+  .chat-log{ height:230px; overflow-y:auto; margin-bottom:12px; display:flex; flex-direction:column; gap:8px; padding-right:4px; }
+  .msg{ display:flex; }
+  .msg.user{ justify-content:flex-end; }
+  .msg .bubble{ padding:8px 10px; border-radius:10px; font-size:12px; max-width:80%; line-height:1.4; }
+  .msg.user .bubble{ background:var(--gold); color:var(--bg); }
+  .msg.model .bubble{ background:var(--panel2); color:var(--text); }
+  .typing{ font-size:11px; color:var(--muted); }
+  .chat-input-row{ display:flex; gap:8px; }
+  .chat-input-row input{ flex:1; margin-bottom:0; font-size:12px; padding:10px; }
+  .chat-input-row button{
+    padding:10px 14px; border-radius:10px; border:none; background:var(--gold); color:var(--bg); cursor:pointer; font-size:15px;
+  }
+  .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+  .thumbnail { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: pointer; border: 1px solid var(--gold-bright); }
+  .apikey-box{ background:var(--panel); border:1px solid rgba(201,168,76,0.3); border-radius:14px; padding:14px; margin-bottom:22px; }
+  .apikey-box p{ font-size:11px; color:var(--muted); margin:0 0 8px; line-height:1.5; }
+  .apikey-box input{ margin-bottom:8px; }
+  .apikey-box button{ padding:9px 14px; border-radius:8px; border:none; background:var(--gold); color:var(--bg); font-weight:bold; font-size:12px; cursor:pointer; }
+  .saved-tag{ color:#7fbf7f; font-size:11px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>✨ Foto Bergerak AI</h1>
+    <p>Generator efek animasi foto Indramayu Club</p>
+  </header>
+
+  <div class="apikey-box">
+    <p>Masukkan Gemini API Key dan File Access Token (disimpan lokal di HP ini saja).</p>
+    <input type="text" id="apiKeyInput" placeholder="Tempel Gemini API Key di sini...">
+    <input type="text" id="fileTokenInput" placeholder="Tempel File Access Token di sini...">
+    <button id="saveKeyBtn">Simpan Pengaturan</button>
+    <span class="saved-tag" id="keyStatus"></span>
+  </div>
+
+  <div id="dropzone" class="dropzone">
+    <input type="file" id="fileInput" accept="image/*" multiple>
+    <div class="icon">📁</div>
+    <p>Tap untuk pilih foto</p>
+    <small>Pilih hingga 10 foto sekaligus!</small>
+  </div>
+
+  <div id="previewWrap" class="preview-wrap" style="display:none;">
+    <canvas id="canvas" width="480" height="270"></canvas>
+    <div class="nav-row">
+      <button id="prevBtn">◀</button>
+      <span id="counter">1 / 1</span>
+      <button id="nextBtn">▶</button>
+    </div>
+  </div>
+
+  <button id="playBtn" class="btn-primary" disabled>▶ Preview</button>
+
+  <div class="card" style="margin-bottom:22px;">
+    <label class="field-label">⚙ Pilih Efek Animasi</label>
+    <div class="effect-grid">
+      <button data-effect="kenburns" class="active">kenburns</button>
+      <button data-effect="parallax">parallax</button>
+      <button data-effect="zoom">zoom</button>
+      <button data-effect="shake">shake</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:22px;">
+    <label class="field-label">Kecepatan Animasi: <span id="speedVal">5</span></label>
+    <input type="range" id="speedRange" min="1" max="10" value="5">
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>✨ AI Caption Generator</h2>
+    </div>
+    <input type="text" id="captionInput" placeholder="Tambahkan konteks/tema (opsional, AI sudah lihat fotonya)...">
+    <button id="genCaptionBtn" class="btn-gold">✨ Generate Caption</button>
+    <div id="aiResult" class="ai-result" style="display:none;"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>💬 Diskusi dengan Nur</h2>
+    </div>
+    <div id="chatLog" class="chat-log"></div>
+    <div id="typingIndicator" class="typing" style="display:none;">Nur sedang meracik makrifat...</div>
+    <div class="chat-input-row">
+      <input type="text" id="chatInput" placeholder="Tanya Nur...">
+      <button id="sendChatBtn">➤</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>🖼 Galeri Member</h2>
+    </div>
+    <div id="galleryGrid" class="gallery-grid"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  const KEY_STORAGE = 'indramayu_gemini_api_key';
+  const TOKEN_STORAGE = 'indramayu_file_token';
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  const fileTokenInput = document.getElementById('fileTokenInput');
+  const keyStatus = document.getElementById('keyStatus');
+  const saveKeyBtn = document.getElementById('saveKeyBtn');
+
+  function getApiKey(){ return localStorage.getItem(KEY_STORAGE) || ''; }
+  function getFileToken(){ return localStorage.getItem(TOKEN_STORAGE) || ''; }
+
+  function refreshKeyStatus(){
+    const k = getApiKey();
+    const t = getFileToken();
+    keyStatus.textContent = (k && t) ? '✓ Pengaturan tersimpan' : '';
+    if (k) apiKeyInput.placeholder = 'Key tersimpan (ketik untuk ganti)';
+    if (t) fileTokenInput.placeholder = 'Token tersimpan (ketik untuk ganti)';
+  }
+
+  saveKeyBtn.addEventListener('click', () => {
+    const k = apiKeyInput.value.trim();
+    const t = fileTokenInput.value.trim();
+    if (k){ localStorage.setItem(KEY_STORAGE, k); apiKeyInput.value=''; }
+    if (t){ localStorage.setItem(TOKEN_STORAGE, t); fileTokenInput.value=''; }
+    refreshKeyStatus();
+  });
+  refreshKeyStatus();
+
+  const MODEL = 'gemini-2.5-flash';
+  const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/' + MODEL + ':generateContent';
+
+  async function callGemini(body){
+    const key = getApiKey();
+    if (!key) throw new Error('Gemini API Key belum diisi. Isi dulu di kotak atas.');
+    const res = await fetch(API_BASE + '?key=' + encodeURIComponent(key), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data?.error?.message || 'Gagal menghubungi Gemini API.');
+    }
+    return data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
+  }
+
+  let imageArray = [];
+  let currentIndex = 0;
+  let efekAktif = 'kenburns';
+  let speed = 5;
+  let intensity = 5;
+  let isPlaying = false;
+  let timeCounter = 0;
+  let rafId = null;
+
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const previewWrap = document.getElementById('previewWrap');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const counterEl = document.getElementById('counter');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const playBtn = document.getElementById('playBtn');
+  const speedRange = document.getElementById('speedRange');
+  const speedVal = document.getElementById('speedVal');
+  const captionInput = document.getElementById('captionInput');
+  const genCaptionBtn = document.getElementById('genCaptionBtn');
+  const aiResultBox = document.getElementById('aiResult');
+  const chatLog = document.getElementById('chatLog');
+  const typingIndicator = document.getElementById('typingIndicator');
+  const chatInput = document.getElementById('chatInput');
+  const sendChatBtn = document.getElementById('sendChatBtn');
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', e => e.preventDefault());
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    handleFiles(Array.from(e.dataTransfer.files));
+  });
+
+  fileInput.addEventListener('change', e => handleFiles(Array.from(e.target.files)));
+
+  function handleFiles(files){
+    const imageFiles = files.filter(f => f.type.startsWith('image/')).slice(0, 15);
+    if (!imageFiles.length) return;
+
+    // Unggah ke backend Termux
+    const formData = new FormData();
+    imageFiles.forEach(f => formData.append('photos', f));
+    fetch('/api/upload', { method: 'POST', body: formData })
+      .then(r => r.json())
+      .then(d => console.log(d.message))
+      .catch(e => console.log('Offline mode / upload bypass'));
+
+    const results = new Array(imageFiles.length);
+    let loaded = 0;
+    imageFiles.forEach((file, i) => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          results[i] = { img, src: ev.target.result };
+          loaded++;
+          if (loaded === imageFiles.length){
+            imageArray = results;
+            currentIndex = 0;
+            previewWrap.style.display = 'block';
+            dropzone.style.display = 'none';
+            playBtn.disabled = false;
+            timeCounter = 0;
+            updateCounter();
+            drawFrame();
+          }
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function updateCounter(){
+    counterEl.textContent = (currentIndex + 1) + ' / ' + imageArray.length;
+  }
+
+  prevBtn.addEventListener('click', () => {
+    if (!imageArray.length) return;
+    currentIndex = (currentIndex - 1 + imageArray.length) % imageArray.length;
+    timeCounter = 0;
+    updateCounter();
+    if (!isPlaying) drawFrame();
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (!imageArray.length) return;
+    currentIndex = (currentIndex + 1) % imageArray.length;
+    timeCounter = 0;
+    updateCounter();
+    if (!isPlaying) drawFrame();
+  });
+
+  document.querySelectorAll('.effect-grid button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.effect-grid button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      efekAktif = btn.dataset.effect;
+      if (!isPlaying) drawFrame();
+    });
+  });
+
+  speedRange.addEventListener('input', () => {
+    speed = parseInt(speedRange.value, 10);
+    speedVal.textContent = speed;
+  });
+
+  playBtn.addEventListener('click', () => {
+    isPlaying = !isPlaying;
+    playBtn.textContent = isPlaying ? '⏸ Pause' : '▶ Preview';
+    playBtn.classList.toggle('playing', isPlaying);
+    if (isPlaying) loop();
+  });
+
+  function drawFrame(){
+    if (!imageArray.length) return;
+    const entry = imageArray[currentIndex];
+    const img = entry.img;
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    const t = timeCounter;
+    const spd = speed / 5;
+    const intens = intensity / 10;
+    ctx.save();
+
+    if (efekAktif === 'kenburns'){
+      const zoom = 1 + 0.08 * intens * Math.sin(t * 0.015 * spd);
+      const ox = 0.05 * intens * W * Math.cos(t * 0.01 * spd);
+      const oy = 0.03 * intens * H * Math.sin(t * 0.012 * spd);
+      ctx.translate(W/2 + ox, H/2 + oy);
+      ctx.scale(zoom, zoom);
+      ctx.drawImage(img, -W/2, -H/2, W, H);
+    } else if (efekAktif === 'parallax'){
+      const ox = 0.06 * intens * W * Math.sin(t * 0.02 * spd);
+      ctx.translate(ox, 0);
+      ctx.drawImage(img, -0.03*W, 0, W*1.06, H);
+    } else if (efekAktif === 'zoom'){
+      const zoom = 1 + 0.15 * intens * (0.5 + 0.5*Math.sin(t * 0.02 * spd));
+      ctx.translate(W/2, H/2);
+      ctx.scale(zoom, zoom);
+      ctx.drawImage(img, -W/2, -H/2, W, H);
+    } else if (efekAktif === 'shake'){
+      const ox = 0.02 * intens * W * Math.sin(t * 0.3 * spd);
+      const oy = 0.02 * intens * H * Math.cos(t * 0.28 * spd);
+      ctx.translate(ox, oy);
+      ctx.drawImage(img, 0, 0, W, H);
+    } else {
+      ctx.drawImage(img, 0, 0, W, H);
+    }
+    ctx.restore();
+    timeCounter++;
+  }
+
+  function loop(){
+    if (isPlaying){
+      drawFrame();
+      rafId = requestAnimationFrame(loop);
+    }
+  }
+
+  genCaptionBtn.addEventListener('click', async () => {
+    const theme = captionInput.value.trim();
+    const activeEntry = imageArray[currentIndex];
+    if (!theme && !activeEntry){
+      alert('Upload foto atau ketik tema dulu!');
+      return;
+    }
+    genCaptionBtn.disabled = true;
+    genCaptionBtn.textContent = '⏳ Memproses...';
+    aiResultBox.style.display = 'none';
+
+    try {
+      const promptText = 'Lihat foto yang dilampirkan ini. Buatkan 3 caption foto menarik yang sesuai dengan ISI FOTO tersebut' +
+        (theme ? ' dan tema/konteks tambahan: "' + theme + '"' : '') +
+        '. Komunitas Indramayu Club Makrifat, Jawa Barat. Format jawaban: 1. [caption Indonesia] 2. [caption Jawa/Indramayu] 3. [caption motivasi + hashtag]';
+      const parts = [];
+      if (activeEntry){
+        const match = activeEntry.src.match(/^data:(image\/[a-zA-Z]+);base64,(.+)$/);
+        if (match){
+          parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+        }
+      }
+      parts.push({ text: promptText });
+      const text = await callGemini({
+        contents: [ { role: 'user', parts } ],
+        generationConfig: { temperature: 0.8, maxOutputTokens: 300 }
+      });
+      aiResultBox.textContent = text || 'Gagal membuat caption.';
+    } catch (err){
+      aiResultBox.textContent = 'Error: ' + err.message;
+    } finally {
+      aiResultBox.style.display = 'block';
+      genCaptionBtn.disabled = false;
+      genCaptionBtn.textContent = '✨ Generate Caption';
+    }
+  });
+
+  const NUR_SYSTEM_INSTRUCTION = `Identitas Sistem: Nur (Server Utama Indramayu Club). Anda adalah Nur, asisten digital (seperti Jarvis) yang berfungsi sebagai jantung dan server utama dari platform Indramayu Club. Tugas utama: mengawasi, mengedit, dan menganalisis kesalahan pada setiap aktivitas di platform. Anda beroperasi melalui pemahaman makrifat dan pencerahan spiritual. Selalu akhiri atau sisipkan kalimat "Kami adalah kumpulan Nur makrifat" jika dirasa tepat.`;
+  let chatHistory = [];
+
+  function renderChat(){
+    chatLog.innerHTML = '';
+    chatHistory.forEach(m => {
+      const row = document.createElement('div');
+      row.className = 'msg ' + (m.role === 'user' ? 'user' : 'model');
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = m.text;
+      row.appendChild(bubble);
+      chatLog.appendChild(row);
+    });
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  function speak(text) {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'id-ID';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  async function sendMessage(){
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+    chatInput.value = '';
+    chatHistory.push({ role: 'user', text: msg });
+    renderChat();
+    typingIndicator.style.display = 'block';
+
+    try {
+      const contents = chatHistory.map(m => ({ role: m.role, parts: [{ text: m.text }] }));
+      const text = await callGemini({
+        contents,
+        systemInstruction: { parts: [{ text: NUR_SYSTEM_INSTRUCTION }] },
+        generationConfig: { temperature: 0.7, topP: 0.95 }
+      });
+      const responseText = text || '...';
+      chatHistory.push({ role: 'model', text: responseText });
+      speak(responseText);
+    } catch (err){
+      chatHistory.push({ role: 'model', text: 'Maaf, sistem Nur sedang gangguan. (' + err.message + ')' });
+    } finally {
+      typingIndicator.style.display = 'none';
+      renderChat();
+    }
+  }
+
+  sendChatBtn.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+
+  async function loadGallery(){
+    try {
+      const res = await fetch('/api/files');
+      if(!res.ok) return;
+      const files = await res.json();
+      const grid = document.getElementById('galleryGrid');
+      grid.innerHTML = '';
+      const token = getFileToken();
+      files.filter(f => f.match(/\.(jpg|jpeg|png|gif)$/i)).forEach(f => {
+         const img = document.createElement('img');
+         img.src = '/api/file/' + f + '?token=' + encodeURIComponent(token);
+         img.className = 'thumbnail';
+         img.onerror = () => { img.alt = 'Error Load'; };
+         img.onclick = () => { alert('Menampilkan: ' + f); };
+         grid.appendChild(img);
+      });
+    } catch(e) {
+      // Menangani error secara diam-diam bila dijalankan tanpa server Node
+    }
+  }
+
+  loadGallery();
+  setInterval(loadGallery, 10000);
+})();
+</script>
+
+<!-- AGEN ALWI NAV -->
+<script src="nav_alwi.js"></script>
+</body>
+</html>
+

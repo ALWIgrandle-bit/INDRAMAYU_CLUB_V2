@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚡ Nur Creative Lab — AI Image Generator</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #0f172a;
+        color: #e2e8f0;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    h1 { color: #facc15; margin-bottom: 6px; font-size: 1.6em; text-align: center; }
+    .subtitle { color: #94a3b8; font-size: 12px; margin-bottom: 24px; text-align: center; }
+    .container {
+        background-color: #1e293b;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        width: 100%;
+        max-width: 500px;
+        margin-bottom: 18px;
+        box-sizing: border-box;
+    }
+    label { display: block; margin-bottom: 6px; font-weight: bold; color: #cbd5e1; font-size: 13px; }
+    input[type="text"], textarea, select {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 14px;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        font-size: 13px;
+        box-sizing: border-box;
+        background: #0f172a;
+        color: #e2e8f0;
+        resize: vertical;
+    }
+    textarea { min-height: 70px; }
+    button {
+        background-color: #facc15;
+        color: #0f172a;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        width: 100%;
+        margin-top: 4px;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.secondary { background: #334155; color: #e2e8f0; margin-top: 8px; }
+    button.copybtn { background: #22c55e; color: #0f172a; margin-top: 8px; }
+
+    .result-box {
+        background-color: #0f172a;
+        padding: 14px;
+        border-radius: 8px;
+        margin-top: 16px;
+        border: 1px dashed #334155;
+    }
+    .result-box p { font-weight: bold; margin-bottom: 8px; color: #cbd5e1; font-size: 12px; }
+    #generatedPrompt { background-color: #1e293b; min-height: 90px; margin-bottom: 0; }
+
+    .image-result-box {
+        background-color: #1e293b;
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px dashed #334155;
+        text-align: center;
+        width: 100%;
+        max-width: 500px;
+        box-sizing: border-box;
+    }
+    .image-result-box p { font-weight: bold; margin-bottom: 12px; color: #cbd5e1; font-size: 13px; }
+    .image-placeholder-container {
+        min-height: 180px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 8px;
+        overflow: hidden;
+    }
+    #generatedImage { max-width: 100%; height: auto; border-radius: 8px; display: block; margin: 0 auto; }
+    .loading-text { font-style: italic; color: #94a3b8; font-size: 13px; display: none; }
+    .save-status { font-size: 11px; color: #7fbf7f; margin-top: 8px; min-height: 14px; }
+</style>
+</head>
+<body>
+    <h1>⚡ Nur Creative Lab</h1>
+    <div class="subtitle">AI Image Prompt Generator — otomatis simpan ke HP</div>
+
+    <div class="container">
+        <label for="keywords">Keywords / Deskripsi:</label>
+        <textarea id="keywords" rows="4" placeholder="Contoh: Lelaki berjaket hitam, sinematik, latar kota malam..."></textarea>
+
+        <label for="negative">Negative Prompt (yang mau dihindari):</label>
+        <textarea id="negative" rows="2" placeholder="Contoh: blurry, distorted, low quality, bad anatomy"></textarea>
+
+        <label for="style">Style:</label>
+        <select id="style">
+            <option value="">-- Pilih Style --</option>
+            <option value="photorealistic">Photorealistic</option>
+            <option value="fantasy art">Fantasy Art</option>
+            <option value="sci-fi">Sci-Fi</option>
+            <option value="impressionistic">Impressionistic</option>
+            <option value="cyberpunk">Cyberpunk</option>
+            <option value="anime">Anime</option>
+            <option value="pixel art">Pixel Art</option>
+        </select>
+
+        <label for="medium">Medium:</label>
+        <select id="medium">
+            <option value="">-- Pilih Medium --</option>
+            <option value="digital painting">Digital Painting</option>
+            <option value="oil on canvas">Oil on Canvas</option>
+            <option value="watercolor">Watercolor</option>
+            <option value="acrylic painting">Acrylic Painting</option>
+            <option value="pencil sketch">Pencil Sketch</option>
+            <option value="3d render">3D Render</option>
+            <option value="photography">Photography</option>
+        </select>
+
+        <label for="lighting">Lighting:</label>
+        <select id="lighting">
+            <option value="">-- Pilih Lighting --</option>
+            <option value="studio lighting">Studio Lighting</option>
+            <option value="cinematic lighting">Cinematic Lighting</option>
+            <option value="golden hour">Golden Hour</option>
+            <option value="dramatic lighting">Dramatic Lighting</option>
+            <option value="soft natural light">Soft Natural Light</option>
+        </select>
+
+        <label for="artist">Artist/Influence:</label>
+        <input type="text" id="artist" placeholder="Contoh: Van Gogh, Hayao Miyazaki, Greg Rutkowski">
+
+        <button id="generateBtn">✨ Generate & Simpan Otomatis</button>
+    </div>
+
+    <div class="container result-box">
+        <p>Prompt yang digunakan:</p>
+        <textarea id="generatedPrompt" readonly></textarea>
+        <button class="copybtn" id="copyBtn">📋 Copy Prompt</button>
+    </div>
+
+    <div class="image-result-box">
+        <p>Hasil Gambar:</p>
+        <div class="image-placeholder-container">
+            <img id="generatedImage" src="" alt="Generated AI Image" style="display: none;">
+            <span class="loading-text">⏳ Membuat gambar...</span>
+        </div>
+        <button class="secondary" id="resaveBtn" style="display:none;">⬇️ Simpan Ulang ke HP</button>
+        <div class="save-status" id="saveStatus"></div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const keywordsInput = document.getElementById('keywords');
+    const negativeInput = document.getElementById('negative');
+    const styleSelect = document.getElementById('style');
+    const mediumSelect = document.getElementById('medium');
+    const lightingSelect = document.getElementById('lighting');
+    const artistInput = document.getElementById('artist');
+    const generateBtn = document.getElementById('generateBtn');
+    const generatedPromptTextarea = document.getElementById('generatedPrompt');
+    const copyBtn = document.getElementById('copyBtn');
+    const generatedImage = document.getElementById('generatedImage');
+    const loadingText = document.querySelector('.loading-text');
+    const resaveBtn = document.getElementById('resaveBtn');
+    const saveStatus = document.getElementById('saveStatus');
+
+    // ---------- AUTO-RESTORE FORM DARI localStorage ----------
+    const FIELDS = { keywords: keywordsInput, negative: negativeInput, style: styleSelect, medium: mediumSelect, lighting: lightingSelect, artist: artistInput };
+    Object.entries(FIELDS).forEach(([key, el]) => {
+        const saved = localStorage.getItem('nurlab_' + key);
+        if (saved) el.value = saved;
+        el.addEventListener('input', () => localStorage.setItem('nurlab_' + key, el.value));
+        el.addEventListener('change', () => localStorage.setItem('nurlab_' + key, el.value));
+    });
+    const savedPromptFull = localStorage.getItem('nurlab_lastPrompt');
+    if (savedPromptFull) generatedPromptTextarea.value = savedPromptFull;
+
+    let currentImageUrl = '';
+
+    function buildPrompt(){
+        let promptParts = [];
+        const keywords = keywordsInput.value.trim();
+        if (keywords) promptParts.push(keywords);
+
+        const style = styleSelect.value;
+        if (style) promptParts.push(style);
+
+        const medium = mediumSelect.value;
+        if (medium) promptParts.push(medium);
+
+        const lighting = lightingSelect.value;
+        if (lighting) promptParts.push(lighting);
+
+        const artist = artistInput.value.trim();
+        if (artist) promptParts.push(`by ${artist}`);
+
+        promptParts.push("highly detailed, intricate, sharp focus, cinematic, 8k");
+
+        return promptParts.filter(p => p !== "").join(", ");
+    }
+
+    // ---------- AUTO-DOWNLOAD GAMBAR ASLI (bukan cuma teks link) ----------
+    async function autoSaveImage(imageUrl, promptText){
+        saveStatus.textContent = '⏳ Menyimpan gambar ke HP...';
+        try {
+            const res = await fetch(imageUrl);
+            if (!res.ok) throw new Error('Gagal mengambil file gambar.');
+            const blob = await res.blob();
+            const objectUrl = URL.createObjectURL(blob);
+
+            const safeSlug = (keywordsInput.value.trim() || 'nur-lab-image')
+                .toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40).replace(/^-+|-+$/g, '');
+            const filename = `nurlab-${safeSlug || 'image'}-${Date.now()}.jpg`;
+
+            const a = document.createElement('a');
+            a.href = objectUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(objectUrl);
+
+            saveStatus.textContent = '✅ Gambar tersimpan otomatis: ' + filename;
+        } catch (err) {
+            saveStatus.textContent = '❌ Gagal auto-simpan (' + err.message + '). Coba tombol "Simpan Ulang" di bawah.';
+        }
+    }
+
+    generateBtn.addEventListener('click', () => {
+        const finalPrompt = buildPrompt();
+        if (!finalPrompt) { alert('Isi keywords dulu!'); return; }
+
+        generatedPromptTextarea.value = finalPrompt;
+        localStorage.setItem('nurlab_lastPrompt', finalPrompt);
+
+        loadingText.style.display = 'block';
+        generatedImage.style.display = 'none';
+        generatedImage.src = '';
+        resaveBtn.style.display = 'none';
+        saveStatus.textContent = '';
+        generateBtn.disabled = true;
+
+        let fullPromptForApi = finalPrompt;
+        const negative = negativeInput.value.trim();
+        if (negative) fullPromptForApi += ` | negative: ${negative}`;
+
+        const encodedPrompt = encodeURIComponent(fullPromptForApi);
+        const seed = Math.floor(Math.random() * 1000000);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=768&seed=${seed}&nologo=true`;
+
+        generatedImage.onload = async () => {
+            loadingText.style.display = 'none';
+            generatedImage.style.display = 'block';
+            generateBtn.disabled = false;
+            resaveBtn.style.display = 'block';
+            currentImageUrl = imageUrl;
+            await autoSaveImage(imageUrl, finalPrompt);
+        };
+        generatedImage.onerror = () => {
+            loadingText.style.display = 'none';
+            generateBtn.disabled = false;
+            saveStatus.textContent = '❌ Gagal generate gambar. Coba lagi.';
+        };
+        generatedImage.src = imageUrl;
+    });
+
+    resaveBtn.addEventListener('click', () => {
+        if (currentImageUrl) autoSaveImage(currentImageUrl, generatedPromptTextarea.value);
+    });
+
+    copyBtn.addEventListener('click', () => {
+        generatedPromptTextarea.select();
+        generatedPromptTextarea.setSelectionRange(0, 99999);
+        try {
+            navigator.clipboard.writeText(generatedPromptTextarea.value);
+            saveStatus.textContent = '📋 Prompt disalin ke clipboard!';
+        } catch (err) {
+            alert('Gagal copy otomatis. Salin manual dari kotak teks.');
+        }
+    });
+});
+</script>
+
+<!-- ⛑️ AGEN ALWI NAV -->
+<script src="nav_alwi.js"></script>
+</body>
+</html>
+
+
