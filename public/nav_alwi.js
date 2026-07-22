@@ -16,7 +16,7 @@
       const gain = audioCtx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Note D5 (Nada Spiritual Positif)
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Note D5
       osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // Ramp up to A5
 
       gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
@@ -32,14 +32,19 @@
     }
   }
 
-  // ── CONFIG 3 APLIKASI PETA (SESUAI NAMA FILE ASLI) ──
+  // ── CONFIG SELURUH APLIKASI HTML (Root & Public) ──
   const PAGE_INFO = {
-    'peta-cod.html'  : { icon: '📍', label: 'Peta 3 Titik',   desc: 'Peta COD Bebas 3 Titik' },
-    'peta-cod22.html': { icon: '🟡', label: 'Pos Tengah Awi', desc: 'Lokasi Member ke Pos Awi' },
-    'peta.html'      : { icon: '🗺️', label: 'Peta Interaktif', desc: 'Cari Paket & Alamat Indramayu' }
+    'index.html':       { icon: '🕌', label: 'Nur Master',       desc: 'Pusat Nur System & Lab' },
+    'ALWI.html':        { icon: '⚡', label: 'ALWI System',      desc: 'Modul Server & Lab Alwi' },
+    'peta.html':        { icon: '🗺️', label: 'Peta Interaktif',  desc: 'Pusat Indramayu Base' },
+    'peta-cod.html':    { icon: '📍', label: 'Peta 3 Titik',    desc: 'Peta COD 3 Titik Bebas' },
+    'peta-cod22.html':  { icon: '🟡', label: 'Pos Tengah Awi',  desc: 'Navigasi Member ke Pos Awi' },
+    'builder.html':     { icon: '🛠️', label: 'App Builder',     desc: 'Modul Pembangun Sistem' },
+    'gambarBUILD.html': { icon: '🖼️', label: 'Gambar Builder',  desc: 'Pembangun Aset Visual' },
+    'nurBARU2.html':    { icon: '🌟', label: 'Nur Baru V2',      desc: 'Sistem Generator Nur' }
   };
 
-  const currentPage = location.pathname.split('/').pop() || 'peta.html';
+  const currentPage = location.pathname.split('/').pop() || 'index.html';
 
   // ── INJECT CSS ALWI ──
   const style = document.createElement('style');
@@ -60,26 +65,28 @@
     #alwi-nav-toggle:hover { transform: scale(1.08); }
     #alwi-nav-panel {
       display: none; position: absolute;
-      bottom: 66px; left: 0; width: 260px;
+      bottom: 66px; left: 0; width: 280px;
+      max-height: 400px; overflow-y: auto;
       background: #1e1e1e; border: 1.5px solid #ffd700;
       border-radius: 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.8);
-      overflow: hidden;
     }
     #alwi-nav-panel.show { display: block; }
     .alwi-nav-head {
       background: #121212; border-bottom: 1px solid #333;
       padding: 10px 14px; display: flex; align-items: center; gap: 8px;
+      position: sticky; top: 0; z-index: 10;
     }
     .alwi-nav-head-title { font-size: 13px; font-weight: bold; color: #ffd700; }
     .alwi-nav-head-sub   { font-size: 10px; color: #a0a0a0; }
-    .alwi-tool-list { padding: 8px; display: flex; flex-direction: column; gap: 5px; }
+    .alwi-tool-list { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
     .alwi-tool-item {
       display: flex; align-items: center; gap: 9px;
-      padding: 9px 10px; border-radius: 8px;
+      padding: 8px 10px; border-radius: 8px;
       text-decoration: none; color: #e0e0e0;
       background: #161616; border: 1px solid #333;
+      transition: background 0.15s, border-color 0.15s;
     }
-    .alwi-tool-item:hover { border-color: #ffd700; }
+    .alwi-tool-item:hover { border-color: #ffd700; background: #222; }
     .alwi-tool-item.current { border-color: #ffd700; background: rgba(255, 215, 0, 0.15); }
     .alwi-tool-label { font-size: 12px; font-weight: bold; color: #ffd700; }
     .alwi-tool-desc  { font-size: 10px; color: #a0a0a0; }
@@ -95,7 +102,7 @@
         <span style="font-size:20px;">⛑️</span>
         <div>
           <div class="alwi-nav-head-title">POS TENGAH ALWI</div>
-          <div class="alwi-nav-head-sub">Penghubung 3 Aplikasi Peta</div>
+          <div class="alwi-nav-head-sub">Penghubung Seluruh Modul HTML</div>
         </div>
       </div>
       <div class="alwi-tool-list" id="alwi-tool-list"></div>
@@ -108,18 +115,17 @@
   const toggle = document.getElementById('alwi-nav-toggle');
   const list   = document.getElementById('alwi-tool-list');
 
-  // Klik Toggle + Buka Panel + Bunyikan Suara 🔊
   toggle.addEventListener('click', () => {
     playClickSound();
     panel.classList.toggle('show');
   });
 
-  // Render Daftar Aplikasi Peta
+  // Render Seluruh Aplikasi
   list.innerHTML = Object.keys(PAGE_INFO).map(file => {
     const info = PAGE_INFO[file];
     const isCurrent = file === currentPage;
     return `
-      <a href="/${file}" class="alwi-tool-item ${isCurrent ? 'current' : ''}" onclick="window.playClickSound && window.playClickSound()">
+      <a href="${file}" class="alwi-tool-item ${isCurrent ? 'current' : ''}" onclick="window.playClickSound && window.playClickSound()">
         <span style="font-size:18px">${info.icon}</span>
         <div>
           <div class="alwi-tool-label">${info.label} ${isCurrent ? '(Aktif)' : ''}</div>
@@ -131,3 +137,4 @@
 
   window.playClickSound = playClickSound;
 })();
+
