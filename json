@@ -1,0 +1,15 @@
+{
+  "memberAds": [
+    {
+      "id": "ad-001",
+      "memberName": "Kurnadi Bewok",
+      "title": "Portal Makrifat & Komunitas",
+      "type": "image",
+      "media": "data:image/png;base64,...",
+      "link": "https://localhost:3000",
+      "date": "2026-07-23",
+      "active": true
+    }
+  ]
+}
+
